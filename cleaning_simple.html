@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>廁所清潔紀錄</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            text-align: center; 
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input { 
+            padding: 15px; 
+            font-size: 16px; 
+            margin: 10px 0; 
+            width: 90%; 
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button { 
+            padding: 15px 30px; 
+            font-size: 16px; 
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            margin: 10px;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+        .red-btn { background: #f44336 !important; }
+        .red-btn:hover { background: #da190b !important; }
+        #scanner { 
+            width: 100%; 
+            height: 300px; 
+            border: 2px dashed #ccc; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            margin: 20px 0;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚽 廁所清潔紀錄系統</h1>
+        
+        <div id="step1">
+            <h3>步驟1: 輸入據點ID</h3>
+            <input id="locationInput" placeholder="例如: 1F-男廁" type="text">
+            <br>
+            <button onclick="nextStep()">下一步</button>
+        </div>
+        
+        <div id="step2" style="display:none;">
+            <h3>據點: <span id="locationDisplay"></span></h3>
+            <input id="cleanerInput" placeholder="請輸入清潔員姓名或代碼" type="text">
+            <br>
+            <button onclick="submitRecord()">✅ 確認完成清潔</button>
+            <button onclick="goBack()" class="red-btn">🔙 返回</button>
+        </div>
+        
+        <div id="result" style="display:none;">
+            <h3>✅ 提交成功！</h3>
+            <p>清潔紀錄已記錄</p>
+            <button onclick="restart()">重新開始</button>
+        </div>
+    </div>
+
+    <script>
+        function nextStep() {
+            const location = document.getElementById('locationInput').value.trim();
+            if (!location) {
+                alert('請輸入據點ID');
+                return;
+            }
+            
+            document.getElementById('locationDisplay').textContent = location;
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+        }
+        
+        function goBack() {
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+        }
+        
+        function submitRecord() {
+            const location = document.getElementById('locationInput').value.trim();
+            const cleaner = document.getElementById('cleanerInput').value.trim();
+            
+            if (!cleaner) {
+                alert('請輸入清潔員姓名或代碼');
+                return;
+            }
+            
+            // 顯示載入中
+            const submitBtn = document.querySelector('#step2 button');
+            submitBtn.textContent = '提交中...';
+            submitBtn.disabled = true;
+            
+            fetch('https://script.google.com/macros/s/AKfycbxM2qauk-R-jabd4T9ce_Tw-S54aYLOjzOcZtHUU8Oh9kHmJ9SU7yT2o2xwPJrVZA2xPg/exec', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    locationId: location,
+                    cleaner: cleaner,
+                    timestamp: new Date().toLocaleString('zh-TW')
+                })
+            })
+            .then(() => {
+                // 恢復按鈕狀態
+                submitBtn.textContent = '✅ 確認完成清潔';
+                submitBtn.disabled = false;
+                // 顯示成功頁面
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+            })
+            .catch(error => {
+                alert('提交失敗，請檢查網路連線');
+                // 恢復按鈕狀態
+                submitBtn.textContent = '✅ 確認完成清潔';
+                submitBtn.disabled = false;
+            });
+        }
+        
+        function restart() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('locationInput').value = '';
+            document.getElementById('cleanerInput').value = '';
+            // 確保按鈕狀態恢復正常
+            const submitBtn = document.querySelector('#step2 button');
+            submitBtn.textContent = '✅ 確認完成清潔';
+            submitBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>
