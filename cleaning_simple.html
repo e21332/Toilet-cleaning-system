@@ -2,7 +2,12 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="清潔紀錄">
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi5buB5omA5riF5r2U57SA6YyEIiwic2hvcnRfbmFtZSI6IuWbuOa9lOe0gOmMhCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2Y1ZjVmNSIsInRoZW1lX2NvbG9yIjoiIzRDQUY1MCIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0OGNtVmpkQ0I0UFNJeE1qZ2lJSGs5SWpFeU9DSWlJSGRwWkhSb1BTSTFOalFpSUdobGFXZG9kRDBpTWpVMklpQm1hV3hzUFNJak5FTkJSalV3SWk4K1BIUmxlSFFnZUQwaU1qVTJJaUI1UFNJeE9EQWlJSFJsZUhRdFlXNWphRzl5UFNKdGFXUmtiR1VpSUdacGJHdzlJaU5tWm1ZaUlHWnZiblF0YzJsNlpUMGlNelFpUGlmcWdKOGdQQzkwWlhoMFBqd3ZjM1puUGc9PSIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
     <title>廁所清潔紀錄</title>
     <style>
         body { 
@@ -148,6 +153,20 @@
             submitBtn.textContent = '✅ 確認完成清潔';
             submitBtn.disabled = false;
         }
+        
+        // PWA 安裝提示
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        
+        // 隱藏網址列（iOS Safari）
+        window.addEventListener('load', () => {
+            if (window.navigator.standalone) {
+                document.body.style.paddingTop = '0';
+            }
+        });
     </script>
 </body>
 </html>
