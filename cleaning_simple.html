@@ -166,6 +166,18 @@
             if (window.navigator.standalone) {
                 document.body.style.paddingTop = '0';
             }
+            
+            // 檢查 URL 參數並自動填入據點 ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const locationParam = urlParams.get('location');
+            
+            if (locationParam) {
+                // 自動填入據點 ID 並直接跳到步驟2
+                document.getElementById('locationInput').value = decodeURIComponent(locationParam);
+                document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+            }
         });
     </script>
 </body>
