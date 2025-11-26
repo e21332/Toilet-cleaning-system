@@ -76,7 +76,7 @@
             <input id="locationInput" placeholder="例如: 男廁1-1" type="text">
             <br>
             <button onclick="nextStep()">下一步</button>
-            <button onclick="showQRScanner()" class="blue-btn">📱 掃描QR碼</button>
+            <button onclick="checkChromeAndScan()" class="blue-btn">📱 掃描QR碼</button>
         </div>
         
         <div id="step2" style="display:none;">
@@ -96,6 +96,18 @@
 
     <script>
         let html5QrCode = null;
+        
+        function checkChromeAndScan() {
+            // 檢測是否為Chrome瀏覽器
+            const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+            
+            if (!isChrome) {
+                alert('QR碼掃描功能需要使用Chrome瀏覽器，請改用手動輸入或切換到Chrome瀏覽器');
+                return;
+            }
+            
+            showQRScanner();
+        }
         
         function showQRScanner() {
             document.getElementById('step1').style.display = 'none';
@@ -266,10 +278,8 @@
                 const lastCleaner = localStorage.getItem('lastCleaner') || '';
                 document.getElementById('cleanerInput').value = lastCleaner;
             } else {
-                // 沒有URL參數：自動開啟QR掃描
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('qr-scanner').style.display = 'block';
-                startQRScanner();
+                // 沒有URL參數：顯示步驟1（不自動開啟QR掃描）
+                document.getElementById('step1').style.display = 'block';
             }
         });
     </script>
