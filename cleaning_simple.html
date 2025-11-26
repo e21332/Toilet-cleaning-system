@@ -52,27 +52,14 @@
     <div class="container">
         <h1>🚽 廁所清潔紀錄系統</h1>
         
-        <div id="qr-scanner" style="display:none;">
-            <h3>📱 使用QR碼掃描</h3>
-            <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left;">
-                <p><strong>步驟：</strong></p>
-                <p>1️⃣ 開啟手機相機或QR掃描應用程式</p>
-                <p>2️⃣ 掃描據點QR碼</p>
-                <p>3️⃣ 從掃描結果中複製據點ID</p>
-                <p>4️⃣ 貼上到下方輸入框</p>
-            </div>
-            <input id="qrLocationInput" placeholder="請貼上掃描QR碼得到的據點ID" type="text" style="margin: 10px 0;">
-            <br>
-            <button onclick="useQRResult()">✅ 確認使用</button>
-            <button onclick="showManualInput()" class="red-btn">手動輸入</button>
-        </div>
+
         
         <div id="step1">
             <h3>步驟1: 輸入據點ID</h3>
             <input id="locationInput" placeholder="例如: 男廁1-1" type="text">
             <br>
             <button onclick="nextStep()">下一步</button>
-            <button onclick="showQRInstructions()" class="blue-btn">📱 使用QR碼</button>
+            <button onclick="openQRScanner()" class="blue-btn">📱 掃描QR碼</button>
         </div>
         
         <div id="step2" style="display:none;">
@@ -91,42 +78,9 @@
     </div>
 
     <script>
-        function showQRInstructions() {
-            document.getElementById('step1').style.display = 'none';
-            document.getElementById('qr-scanner').style.display = 'block';
-        }
-        
-        function showManualInput() {
-            document.getElementById('qr-scanner').style.display = 'none';
-            document.getElementById('step1').style.display = 'block';
-        }
-        
-        function useQRResult() {
-            const qrInput = document.getElementById('qrLocationInput').value.trim();
-            if (!qrInput) {
-                alert('請輸入掃描QR碼得到的據點ID');
-                return;
-            }
-            
-            let locationId = qrInput;
-            
-            // 處理URL格式的QR碼
-            if (qrInput.includes('location=')) {
-                try {
-                    const urlParams = new URLSearchParams(qrInput.split('?')[1]);
-                    locationId = decodeURIComponent(urlParams.get('location'));
-                } catch (e) {
-                    locationId = qrInput;
-                }
-            }
-            
-            document.getElementById('qr-scanner').style.display = 'none';
-            document.getElementById('locationInput').value = locationId;
-            document.getElementById('locationDisplay').textContent = locationId;
-            document.getElementById('step2').style.display = 'block';
-            
-            const lastCleaner = localStorage.getItem('lastCleaner') || '';
-            document.getElementById('cleanerInput').value = lastCleaner;
+        function openQRScanner() {
+            // 直接跳轉到QR掃描器頁面
+            window.location.href = 'qr-scanner.html';
         }
         
         function nextStep() {
