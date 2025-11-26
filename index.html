@@ -1,42 +1,31 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>QR 測試</title>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<style>
-#reader {
-  width: 90vw;
-  max-width: 400px;
-  aspect-ratio: 1/1;
-  margin: auto;
-  border: 2px solid #00bcd4;
-}
-</style>
-</head>
-<body>
-
-<h3 style="text-align:center;">📷 相機測試</h3>
-<div id="reader"></div>
-<p id="result" style="text-align:center;font-size:20px;"></p>
-
 <script>
 const html5QrCode = new Html5Qrcode("reader");
+let scanning = false;
 
 function startScan() {
+  scanning = true;
   html5QrCode.start(
-    { facingMode: "environment" },  
+    { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     (decodedText) => {
+      if (!scanning) return;
+
+      scanning = false;
+      html5QrCode.stop();
       document.getElementById("result").innerText = "掃描結果: " + decodedText;
+
+      // 額外行為（可選）: 如果是網址自動打開
+      if (decodedText.startsWith("http")) {
+        setTimeout(() => {
+          window.open(decodedText, "_blank");
+        }, 500);
+      }
     }
-  ).catch(err => {
+  )
+  .catch(err => {
     document.getElementById("result").innerText = "❌ 錯誤：" + err;
   });
 }
 
 startScan();
 </script>
-</body>
-</html>
