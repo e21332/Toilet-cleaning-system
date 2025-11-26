@@ -5,133 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#4CAF50">
     <title>QR碼掃描器</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            padding: 20px; 
+            padding: 10px; 
             text-align: center; 
-            background: #f5f5f5;
+            background: #000;
             margin: 0;
         }
         .container {
-            max-width: 400px;
+            max-width: 100%;
             margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 { color: #333; font-size: 20px; margin: 20px 0; }
-        .instruction {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        .step {
-            margin: 15px 0;
+            background: #000;
             padding: 10px;
-            background: #f9f9f9;
-            border-left: 4px solid #2196F3;
-            border-radius: 5px;
         }
-        input { 
-            padding: 15px; 
-            font-size: 16px; 
+        h1 { 
+            color: white; 
+            font-size: 18px; 
             margin: 10px 0; 
-            width: 90%; 
-            border: 2px solid #ddd;
+        }
+        #reader {
+            width: 90vw;
+            max-width: 400px;
+            aspect-ratio: 1/1;
+            margin: 20px auto;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+        }
+        #result {
+            color: white;
+            font-size: 16px;
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
             border-radius: 5px;
         }
         button { 
-            padding: 15px 30px; 
+            padding: 12px 20px; 
             font-size: 16px; 
-            background: #4CAF50; 
+            background: #f44336; 
             color: white; 
             border: none; 
             border-radius: 5px; 
             margin: 10px;
             cursor: pointer;
         }
-        button:hover { background: #45a049; }
-        .red-btn { background: #f44336 !important; }
-        .red-btn:hover { background: #da190b !important; }
-        .blue-btn { background: #2196F3 !important; }
-        .blue-btn:hover { background: #0b7dda !important; }
+        button:hover { 
+            background: #da190b; 
+        }
+        .status { 
+            color: white; 
+            margin: 10px 0; 
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📱 QR碼掃描</h1>
-        
-        <div class="instruction">
-            <h3>🔍 使用手機內建掃描功能</h3>
-            
-            <div class="step">
-                <strong>方法一：相機掃描</strong><br>
-                開啟手機相機 → 對準QR碼 → 點擊彈出的連結或通知
-            </div>
-            
-            <div class="step">
-                <strong>方法二：Google Lens</strong><br>
-                開啟Google助理 → 點擊相機圖示 → 掃描QR碼
-            </div>
-            
-            <div class="step">
-                <strong>方法三：Chrome掃描</strong><br>
-                Chrome瀏覽器 → 搜尋框右側的相機圖示 → 掃描QR碼
-            </div>
-        </div>
-        
-        <p><strong>掃描後請將結果貼到下方：</strong></p>
-        <input id="qrResult" placeholder="請貼上QR碼掃描結果或據點ID" type="text">
-        <br>
-        
-        <button onclick="processResult()" class="blue-btn">✅ 確認使用</button>
-        <button onclick="goBack()" class="red-btn">🔙 返回</button>
-        
-        <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-radius: 5px; font-size: 14px;">
-            💡 <strong>小提示：</strong>大部分Android手機的相機都內建QR碼掃描功能，直接用相機對準QR碼即可！
-        </div>
+        <h1>📱 QR碼掃描器</h1>
+        <div class="status">請將QR碼對準掃描框</div>
+        <div id="reader"></div>
+        <div id="result"></div>
+        <button onclick="goBack()">返回主頁面</button>
     </div>
 
     <script>
-        function processResult() {
-            const result = document.getElementById('qrResult').value.trim();
-            if (!result) {
-                alert('請輸入QR碼掃描結果');
-                return;
-            }
-            
-            let locationId = result;
-            
-            // 處理URL格式的QR碼
-            if (result.includes('location=')) {
-                try {
-                    const urlParams = new URLSearchParams(result.split('?')[1]);
-                    locationId = decodeURIComponent(urlParams.get('location'));
-                } catch (e) {
-                    locationId = result;
+        const html5QrCode = new Html5Qrcode("reader");
+        
+        function startScan() {
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    console.log('掃描成功:', decodedText);
+                    
+                    // 顯示掃描結果
+                    document.getElementById("result").innerText = "✅ 掃描成功！正在跳轉...";
+                    
+                    // 停止掃描
+                    html5QrCode.stop();
+                    
+                    // 處理掃描結果
+                    let locationId = decodedText;
+                    if (decodedText.includes('location=')) {
+                        try {
+                            const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+                            locationId = decodeURIComponent(urlParams.get('location'));
+                        } catch (e) {
+                            locationId = decodedText;
+                        }
+                    }
+                    
+                    // 延遲1秒後跳轉，讓用戶看到成功訊息
+                    setTimeout(() => {
+                        const mainPageUrl = window.location.href.replace('qr-scanner.html', 'cleaning_simple.html');
+                        window.location.href = mainPageUrl + '?location=' + encodeURIComponent(locationId);
+                    }, 1000);
                 }
-            }
-            
-            // 返回主頁面並傳遞結果
-            const mainPageUrl = window.location.href.replace('qr-scanner.html', 'cleaning_simple.html');
-            window.location.href = mainPageUrl + '?location=' + encodeURIComponent(locationId);
+            ).catch(err => {
+                console.error('掃描錯誤:', err);
+                document.getElementById("result").innerText = "❌ 相機啟動失敗，請檢查權限設定";
+            });
         }
         
         function goBack() {
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.log(err));
+            }
             const mainPageUrl = window.location.href.replace('qr-scanner.html', 'cleaning_simple.html');
             window.location.href = mainPageUrl;
         }
         
-        // 檢查是否有URL參數傳入的掃描結果
+        // 頁面載入後自動啟動掃描
         window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const result = urlParams.get('result');
-            if (result) {
-                document.getElementById('qrResult').value = decodeURIComponent(result);
+            setTimeout(startScan, 500);
+        });
+        
+        // 防止頁面意外關閉時清理資源
+        window.addEventListener('beforeunload', () => {
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.log(err));
             }
         });
     </script>
