@@ -144,22 +144,8 @@
         }
         
         function restart() {
-            document.getElementById('result').style.display = 'none';
-            
-            const lastCleaner = localStorage.getItem('lastCleaner') || '';
-            document.getElementById('cleanerInput').value = lastCleaner;
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const locationParam = urlParams.get('location');
-            
-            if (locationParam) {
-                document.getElementById('locationInput').value = decodeURIComponent(locationParam);
-                document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'block';
-            } else {
-                document.getElementById('step1').style.display = 'block';
-            }
+            // 直接跳轉到QR掃描器頁面，方便清潔人員進行下一個廊所的掃描
+            window.location.href = 'qr-scanner.html';
         }
         
         window.addEventListener('load', () => {
