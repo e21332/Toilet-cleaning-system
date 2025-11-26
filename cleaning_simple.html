@@ -225,7 +225,7 @@
                 document.getElementById('step1').style.display = 'none';
                 document.getElementById('step2').style.display = 'block';
             } else {
-                // 沒有 URL 參數，顯示QR掃描器
+                // 沒有 URL 參數，回到QR掃描
                 document.getElementById('step1').style.display = 'none';
                 document.getElementById('qr-scanner').style.display = 'block';
                 document.getElementById('locationInput').value = '';
@@ -256,7 +256,7 @@
             const locationParam = urlParams.get('location');
             
             if (locationParam) {
-                // 有參數：自動填入據點 ID 並直接跳到步驟2
+                // 有URL參數：自動填入據點 ID 並直接跳到步驟2
                 document.getElementById('locationInput').value = decodeURIComponent(locationParam);
                 document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
                 document.getElementById('step1').style.display = 'none';
@@ -266,7 +266,7 @@
                 const lastCleaner = localStorage.getItem('lastCleaner') || '';
                 document.getElementById('cleanerInput').value = lastCleaner;
             } else {
-                // 沒有參數：顯示QR掃描器
+                // 沒有URL參數：自動開啟QR掃描
                 document.getElementById('step1').style.display = 'none';
                 document.getElementById('qr-scanner').style.display = 'block';
                 startQRScanner();
