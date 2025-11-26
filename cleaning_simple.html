@@ -73,7 +73,7 @@
         
         <div id="step1">
             <h3>步驟1: 輸入據點ID</h3>
-            <input id="locationInput" placeholder="例如: 1F-男廁" type="text">
+            <input id="locationInput" placeholder="例如: 男廁1-1" type="text">
             <br>
             <button onclick="nextStep()">下一步</button>
             <button onclick="showQRScanner()" class="blue-btn">📱 掃描QR碼</button>
@@ -118,7 +118,7 @@
             
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
                 onScanSuccess
             ).catch(err => {
                 alert('無法啟動相機，請使用手動輸入');
