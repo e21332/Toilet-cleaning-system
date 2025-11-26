@@ -8,6 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="清潔紀錄">
     <meta name="theme-color" content="#4CAF50">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi5buB5omA5riF5r2U57SA6YyEIiwic2hvcnRfbmFtZSI6IuWbuOa9lOe0gOmMhCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2Y1ZjVmNSIsInRoZW1lX2NvbG9yIjoiIzRDQUY1MCIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0OGNtVmpkQ0I0UFNJeE1qZ2lJSGs5SWpFeU9DSWlJSGRwWkhSb1BTSTFOalFpSUdobGFXZG9kRDBpTWpVMklpQm1hV3hzUFNJak5FTkJSalV3SWk4K1BIUmxlSFFnZUQwaU1qVTJJaUI1UFNJeE9EQWlJSFJsZUhRdFlXNWphRzl5UFNKdGFXUmtiR1VpSUdacGJHdzlJaU5tWm1ZaUlHWnZiblF0YzJsNlpUMGlNelFpUGlmcWdKOGdQQzkwWlhoMFBqd3ZjM1puUGc9PSIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9zdmcreG1sIn1dfQ==">
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <title>廁所清潔紀錄</title>
     <style>
         body { 
@@ -45,6 +46,9 @@
         button:hover { background: #45a049; }
         .red-btn { background: #f44336 !important; }
         .red-btn:hover { background: #da190b !important; }
+        .blue-btn { background: #2196F3 !important; }
+        .blue-btn:hover { background: #0b7dda !important; }
+        #qr-reader { width: 100%; max-width: 300px; margin: 20px auto; }
         #scanner { 
             width: 100%; 
             height: 300px; 
@@ -61,11 +65,18 @@
     <div class="container">
         <h1>🚽 廁所清潔紀錄系統</h1>
         
+        <div id="qr-scanner" style="display:none;">
+            <h3>📱 掃描據點QR碼</h3>
+            <div id="qr-reader"></div>
+            <button onclick="showManualInput()" class="red-btn">手動輸入</button>
+        </div>
+        
         <div id="step1">
             <h3>步驟1: 輸入據點ID</h3>
             <input id="locationInput" placeholder="例如: 1F-男廁" type="text">
             <br>
             <button onclick="nextStep()">下一步</button>
+            <button onclick="showQRScanner()" class="blue-btn">📱 掃描QR碼</button>
         </div>
         
         <div id="step2" style="display:none;">
@@ -84,6 +95,56 @@
     </div>
 
     <script>
+        let html5QrCode = null;
+        
+        function showQRScanner() {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('qr-scanner').style.display = 'block';
+            startQRScanner();
+        }
+        
+        function showManualInput() {
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.log(err));
+            }
+            document.getElementById('qr-scanner').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+        }
+        
+        function startQRScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess
+            ).catch(err => {
+                alert('無法啟動相機，請使用手動輸入');
+                showManualInput();
+            });
+        }
+        
+        function onScanSuccess(decodedText) {
+            let locationId;
+            if (decodedText.includes('location=')) {
+                const urlParams = new URLSearchParams(decodedText.split('?')[1]);
+                locationId = decodeURIComponent(urlParams.get('location'));
+            } else {
+                locationId = decodedText;
+            }
+            
+            html5QrCode.stop();
+            document.getElementById('qr-scanner').style.display = 'none';
+            document.getElementById('locationInput').value = locationId;
+            document.getElementById('locationDisplay').textContent = locationId;
+            document.getElementById('step2').style.display = 'block';
+            
+            const lastCleaner = localStorage.getItem('lastCleaner') || '';
+            document.getElementById('cleanerInput').value = lastCleaner;
+        }
+        
         function nextStep() {
             const location = document.getElementById('locationInput').value.trim();
             if (!location) {
@@ -164,9 +225,11 @@
                 document.getElementById('step1').style.display = 'none';
                 document.getElementById('step2').style.display = 'block';
             } else {
-                // 沒有 URL 參數，回到步驟1
-                document.getElementById('step1').style.display = 'block';
+                // 沒有 URL 參數，顯示QR掃描器
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('qr-scanner').style.display = 'block';
                 document.getElementById('locationInput').value = '';
+                startQRScanner();
             }
             
             // 確保按鈕狀態恢復正常
@@ -193,7 +256,7 @@
             const locationParam = urlParams.get('location');
             
             if (locationParam) {
-                // 自動填入據點 ID 並直接跳到步驟2
+                // 有參數：自動填入據點 ID 並直接跳到步驟2
                 document.getElementById('locationInput').value = decodeURIComponent(locationParam);
                 document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
                 document.getElementById('step1').style.display = 'none';
@@ -202,6 +265,11 @@
                 // 自動填入上次的清潔員姓名
                 const lastCleaner = localStorage.getItem('lastCleaner') || '';
                 document.getElementById('cleanerInput').value = lastCleaner;
+            } else {
+                // 沒有參數：顯示QR掃描器
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('qr-scanner').style.display = 'block';
+                startQRScanner();
             }
         });
     </script>
