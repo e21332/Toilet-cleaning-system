@@ -88,18 +88,10 @@
         let html5QrCode = null;
         
         function checkChromeAndScan() {
-            // 手機上Chrome檢測（包含各種手機瀏覽器）
-            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const isChrome = /Chrome|CriOS|EdgA/i.test(navigator.userAgent);
+            // 簡化瀏覽器檢測
+            console.log('瀏覽器資訊:', navigator.userAgent);
             
-            console.log('手機環境:', isMobile, '瀏覽器:', navigator.userAgent);
-            
-            if (isMobile && !isChrome) {
-                alert('手機上請使用Chrome瀏覽器開啟這個頁面才能使用QR掃描功能');
-                return;
-            }
-            
-            console.log('瀏覽器檢測通過，開始啟動QR掃描');
+            // 直接嘗試啟動QR掃描，讓瀏覽器自己處理相容性
             showQRScanner();
         }
         
@@ -120,52 +112,72 @@
         function startQRScanner() {
             console.log('開始初始化QR掃描器');
             
-            // 先檢查是否支援相機
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('您的瀏覽器不支援相機功能，請使用手動輸入');
-                showManualInput();
-                return;
-            }
-            
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("qr-reader");
-            }
-            
-            // 手機優化設定
-            const config = {
-                fps: 10,
-                qrbox: function(viewfinderWidth, viewfinderHeight) {
-                    // 手機上動態調整取景框大小
-                    const minEdgePercentage = 0.7;
-                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                    const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
-                    return {
-                        width: qrboxSize,
-                        height: qrboxSize
-                    };
+            try {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
                 }
-            };
-            
-            // 請求相機權限並啟動掃描
-            html5QrCode.start(
-                { facingMode: "environment" },
-                config,
-                onScanSuccess
-            ).then(() => {
-                console.log('QR掃描器啟動成功');
-            }).catch(err => {
-                console.error('QR掃描器啟動失敗:', err);
                 
-                // 更詳細的錯誤處理
-                if (err.name === 'NotAllowedError') {
-                    alert('相機權限被拒絕，請在瀏覽器設定中允許相機存取權限');
-                } else if (err.name === 'NotFoundError') {
-                    alert('找不到相機設備');
-                } else {
-                    alert('無法啟動相機，請使用手動輸入');
-                }
+                // 使用最簡單的設定
+                const config = {
+                    fps: 10,
+                    qrbox: 250  // 固定大小，不使用函數
+                };
+                
+                console.log('嘗試啟動相機...');
+                
+                // 嘗試多種相機設定
+                const cameraConfig = { facingMode: "environment" };
+                
+                html5QrCode.start(
+                    cameraConfig,
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                ).then(() => {
+                    console.log('QR掃描器啟動成功');
+                }).catch(err => {
+                    console.error('QR掃描器啟動失敗:', err);
+                    
+                    // 嘗試使用前置相機
+                    console.log('嘗試使用前置相機...');
+                    html5QrCode.start(
+                        { facingMode: "user" },
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    ).then(() => {
+                        console.log('前置相機啟動成功');
+                    }).catch(err2 => {
+                        console.error('所有相機都失敗:', err2);
+                        handleCameraError(err2);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('初始化錯誤:', error);
+                alert('初始化QR掃描器失敗，請使用手動輸入');
                 showManualInput();
-            });
+            }
+        }
+        
+        function onScanFailure(error) {
+            // 這個函數會在掃描失敗時被呼叫，但不需要做任何事
+            // console.log('掃描中...', error);
+        }
+        
+        function handleCameraError(err) {
+            let message = '無法啟動相機，請使用手動輸入';
+            
+            if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
+                message = '相機權限被拒絕。請點擊瀏覽器地址欄旁的相機圖示，選擇「允許」';
+            } else if (err.name === 'NotFoundError') {
+                message = '找不到相機設備';
+            } else if (err.name === 'NotSupportedError') {
+                message = '您的瀏覽器不支援相機功能';
+            }
+            
+            alert(message);
+            showManualInput();
         }
         
         function onScanSuccess(decodedText) {
@@ -224,6 +236,87 @@
             fetch('https://script.google.com/macros/s/AKfycbxM2qauk-R-jabd4T9ce_Tw-S54aYLOjzOcZtHUU8Oh9kHmJ9SU7yT2o2xwPJrVZA2xPg/exec', {
                 method: 'POST',
                 mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    locationId: location,
+                    cleaner: cleaner,
+                    timestamp: new Date().toLocaleString('zh-TW')
+                })
+            })
+            .then(() => {
+                // 恢復按鈕狀態
+                submitBtn.textContent = '✅ 確認完成清潔';
+                submitBtn.disabled = false;
+                // 顯示成功頁面
+                document.getElementById('step2').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+            })
+            .catch(error => {
+                alert('提交失敗，請檢查網路連線');
+                // 恢復按鈕狀態
+                submitBtn.textContent = '✅ 確認完成清潔';
+                submitBtn.disabled = false;
+            });
+        }
+        
+        function restart() {
+            document.getElementById('result').style.display = 'none';
+            
+            // 恢復上次輸入的清潔員姓名
+            const lastCleaner = localStorage.getItem('lastCleaner') || '';
+            document.getElementById('cleanerInput').value = lastCleaner;
+            
+            // 檢查是否有 URL 參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const locationParam = urlParams.get('location');
+            
+            if (locationParam) {
+                // 有 URL 參數，直接回到步驟2
+                document.getElementById('locationInput').value = decodeURIComponent(locationParam);
+                document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+            } else {
+                // 沒有URL參數：顯示步驟1（不自動開啟QR掃描）
+                document.getElementById('step1').style.display = 'block';
+            }
+            
+            // 確保按鈕狀態恢復正常
+            const submitBtn = document.querySelector('#step2 button');
+            if (submitBtn) {
+                submitBtn.textContent = '✅ 確認完成清潔';
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // 頁面載入完成後的初始化
+        window.addEventListener('load', () => {
+            console.log('頁面載入完成');
+            
+            // 檢查 URL 參數並自動填入據點 ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const locationParam = urlParams.get('location');
+            
+            if (locationParam) {
+                // 有URL參數：自動填入據點 ID 並直接跳到步驟2
+                document.getElementById('locationInput').value = decodeURIComponent(locationParam);
+                document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                
+                // 自動填入上次的清潔員姓名
+                const lastCleaner = localStorage.getItem('lastCleaner') || '';
+                document.getElementById('cleanerInput').value = lastCleaner;
+            } else {
+                // 沒有URL參數：顯示步驟1
+                document.getElementById('step1').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>   mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/json',
                 },
