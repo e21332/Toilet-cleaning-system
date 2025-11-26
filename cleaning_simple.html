@@ -49,16 +49,6 @@
         .blue-btn { background: #2196F3 !important; }
         .blue-btn:hover { background: #0b7dda !important; }
         #qr-reader { width: 100%; max-width: 300px; margin: 20px auto; }
-        #scanner { 
-            width: 100%; 
-            height: 300px; 
-            border: 2px dashed #ccc; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            margin: 20px 0;
-            background: #fafafa;
-        }
     </style>
 </head>
 <body>
@@ -309,64 +299,6 @@
                 document.getElementById('cleanerInput').value = lastCleaner;
             } else {
                 // 沒有URL參數：顯示步驟1
-                document.getElementById('step1').style.display = 'block';
-            }
-        });
-    </script>
-</body>
-</html>URL 參數
-            const urlParams = new URLSearchParams(window.location.search);
-            const locationParam = urlParams.get('location');
-            
-            if (locationParam) {
-                // 有 URL 參數，直接回到步驟2
-                document.getElementById('locationInput').value = decodeURIComponent(locationParam);
-                document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'block';
-            } else {
-                // 沒有 URL 參數，回到QR掃描
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('qr-scanner').style.display = 'block';
-                document.getElementById('locationInput').value = '';
-                startQRScanner();
-            }
-            
-            // 確保按鈕狀態恢復正常
-            const submitBtn = document.querySelector('#step2 button');
-            submitBtn.textContent = '✅ 確認完成清潔';
-            submitBtn.disabled = false;
-        }
-        
-        // PWA 安裝提示
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-        
-        // 隱藏網址列（iOS Safari）
-        window.addEventListener('load', () => {
-            if (window.navigator.standalone) {
-                document.body.style.paddingTop = '0';
-            }
-            
-            // 檢查 URL 參數並自動填入據點 ID
-            const urlParams = new URLSearchParams(window.location.search);
-            const locationParam = urlParams.get('location');
-            
-            if (locationParam) {
-                // 有URL參數：自動填入據點 ID 並直接跳到步驟2
-                document.getElementById('locationInput').value = decodeURIComponent(locationParam);
-                document.getElementById('locationDisplay').textContent = decodeURIComponent(locationParam);
-                document.getElementById('step1').style.display = 'none';
-                document.getElementById('step2').style.display = 'block';
-                
-                // 自動填入上次的清潔員姓名
-                const lastCleaner = localStorage.getItem('lastCleaner') || '';
-                document.getElementById('cleanerInput').value = lastCleaner;
-            } else {
-                // 沒有URL參數：顯示步驟1（不自動開啟QR掃描）
                 document.getElementById('step1').style.display = 'block';
             }
         });
