@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover" />
+  <title>QR 掃描器（手機友善）</title>
+
+  <!-- html5-qrcode 經典 CDN 引用（會載入目前可用的套件）-->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#06b6d4;
+      --text:#e6eef6;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Helvetica Neue", Arial;
+      background:linear-gradient(180deg,var(--bg),#071022);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+    }
+    .wrap{
+      max-width:640px;
+      margin:0 auto;
+      padding:18px;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    header h1{ font-size:18px; margin:0; }
+    .card{
+      background:rgba(255,255,255,0.03);
+      border-radius:12px;
+      padding:12px;
+      box-shadow: 0 6px 20px rgba(2,6,23,0.6);
+    }
+
+    /* 掃描器容器：保持正方形並置中 */
+    #reader {
+      width:100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      max-width:420px;
+      margin:12px auto;
+      position:relative;
+      border-radius:12px;
+      overflow:hidden;
+      background:#000;
+    }
+
+    /* 覆蓋的掃描框（視覺提示） */
+    .overlay-box {
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:60%;
+      height:60%;
+      border: 3px dashed rgba(255,255,255,0.35);
+      border-radius:8px;
+      box-sizing:border-box;
+      pointer-events:none;
+    }
+    .overlay-corner{
+      position:absolute;
+      width:22px;height:22px;border:3px solid var(--accent);
+    }
+    .c1{ left:calc(50% - 30%); top:calc(50% - 30%); transform:translate(-4px,-4px); border-right:none;border-bottom:none; }
+    .c2{ right:calc(50% - 30%); top:calc(50% - 30%); transform:translate(4px,-4px); border-left:none;border-bottom:none; }
+    .c3{ left:calc(50% - 30%); bottom:calc(50% - 30%); transform:translate(-4px,4px); border-right:none;border-top:none; }
+    .c4{ right:calc(50% - 30%); bottom:calc(50% - 30%); transform:translate(4px,4px); border-left:none;border-top:none; }
+
+    .info-row{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      margin-top:10px;
+      align-items:center;
+    }
+    .btn{
+      background:linear-gradient(90deg,var(--accent),#4ade80);
+      color:#042025;
+      padding:8px 12px;
+      border-radius:8px;
+      border:none;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .small{
+      font-size:13px;color:rgba(230,238,246,0.85);
+    }
+    .result{
+      margin-top:10px;
+      word-break:break-all;
+      background:rgba(255,255,255,0.02);
+      padding:8px;
+      border-radius:8px;
+      font-size:15px;
+    }
+    .hint{ font-size:13px;color:rgba(230,238,246,0.65); margin-top:6px; }
+    @media (max-width:420px){
+      .overlay-corner{ width:18px;height:18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>QR 掃描器</h1>
+    </header>
+
+    <div class="card">
+      <p class="small">請允許使用相機權限，然後把 QR code 對準方框。</p>
+
+      <!-- 視訊/掃描畫面 -->
+      <div id="reader" aria-label="QR 掃描畫面">
+        <!-- 視覺遮罩（正方形） -->
+        <div class="overlay-box" aria-hidden="true">
+          <div class="overlay-corner c1"></div>
+          <div class="overlay-corner c2"></div>
+          <div class="overlay-corner c3"></div>
+          <div class="overlay-corner c4"></div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div>
+          <button id="startBtn" class="btn">開始掃描</button>
+          <button id="stopBtn" class="btn" style="display:none;background:linear-gradient(90deg,#f97316,#fb7185);">停止</button>
+        </div>
+        <div class="small">相機：<span id="cameraLabel">未啟動</span></div>
+      </div>
+
+      <div class="hint">若沒有看到相機畫面，請確認 Chrome 已允許相機存取，或改用「選擇檔案」上傳 QR 圖片。</div>
+
+      <div style="margin-top:10px;">
+        <input id="fileInput" type="file" accept="image/*" />
+        <button id="scanFileBtn" class="btn" style="margin-left:8px;">掃描圖片檔</button>
+      </div>
+
+      <div id="result" class="result" style="display:none;"></div>
+    </div>
+  </div>
+
+<script>
+  // 簡單檢查 html5-qrcode 是否載入
+  if (typeof Html5Qrcode === "undefined") {
+    alert("無法載入掃描模組，請確認網路連線或 CDN 可用。");
+  }
+
+  const readerId = "reader";
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const cameraLabel = document.getElementById("cameraLabel");
+  const resultDiv = document.getElementById("result");
+  const fileInput = document.getElementById("fileInput");
+  const scanFileBtn = document.getElementById("scanFileBtn");
+
+  let html5QrCode = null;
+  let currentCameraId = null;
+
+  // 顯示結果
+  function showResult(text) {
+    resultDiv.style.display = "block";
+    resultDiv.innerText = text;
+  }
+
+  // 啟動掃描（嘗試使用後鏡頭 / 手機環境）
+  async function startScanner() {
+    startBtn.disabled = true;
+    cameraLabel.innerText = "偵測中...";
+    resultDiv.style.display = "none";
+
+    // 建立實例（如果還沒建立）
+    if (!html5QrCode) {
+      html5QrCode = new Html5Qrcode(readerId, /* verbose= */ false);
+    }
+
+    try {
+      const devices = await Html5Qrcode.getCameras();
+      if (!devices || devices.length === 0) {
+        cameraLabel.innerText = "找不到相機";
+        startBtn.disabled = false;
+        return;
+      }
+
+      // 優先選後置鏡頭（facingMode label 含 back / rear / environment）
+      let preferred = devices[0].id;
+      for (const d of devices) {
+        const label = (d.label || "").toLowerCase();
+        if (label.includes("back") || label.includes("rear") || label.includes("environment")) {
+          preferred = d.id;
+          break;
+        }
+      }
+      currentCameraId = preferred;
+      cameraLabel.innerText = "啟動中…";
+
+      // 開始掃描：設定 qrbox 保持方形（會在中間）
+      const config = { fps: 10, qrbox: { width: 250, height: 250 }, disableFlip: false };
+      await html5QrCode.start(
+        currentCameraId,
+        config,
+        (decodedText, decodedResult) => {
+          // 成功讀到 QR
+          showResult("掃描結果： " +
